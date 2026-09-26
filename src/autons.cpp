@@ -1,3 +1,6 @@
+#include "robot_config.hpp"
+
+#if !FLY_VEX_JETSON_CONTROL
 #include "main.h"
 
 /////
@@ -376,3 +379,4 @@ void measure_offsets() {
 // . . .
 // Make your own autonomous functions here!
 // . . .
+#endif  // !FLY_VEX_JETSON_CONTROL

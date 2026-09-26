@@ -1,3 +1,6 @@
+#include "robot_config.hpp"
+
+#if !FLY_VEX_JETSON_CONTROL
 #include "main.h"
 
 /////
@@ -260,3 +263,5 @@ void opcontrol() {
     pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }
 }
+
+#endif  // !FLY_VEX_JETSON_CONTROL
