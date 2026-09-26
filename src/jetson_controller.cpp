@@ -9,7 +9,7 @@
 #include <mutex>
 
 namespace {
-pros::Motor left_motor(10, pros::MotorGears::blue, pros::MotorUnits::degrees);
+pros::Motor left_motor(-10, pros::MotorGears::blue, pros::MotorUnits::degrees);
 pros::Motor right_motor(13, pros::MotorGears::blue, pros::MotorUnits::degrees);
 pros::Motor* motors[] = {&left_motor, &right_motor};
 pros::Mutex motor_mutex;

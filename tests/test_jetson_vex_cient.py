@@ -66,7 +66,7 @@ class ClientTests(unittest.TestCase):
             main()
         sleep.assert_called_once_with(1)
         self.assertEqual([call.args[0] for call in self.port.write.call_args_list],
-                         [b"MOTOR_SPEED,0.250000,0.250000\n", b"STOP_ALL\n"])
+                         [b"MOTOR_SPEED,0.750000,0.750000\n", b"STOP_ALL\n"])
         self.port.close.assert_called_once()
 
 

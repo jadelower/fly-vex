@@ -19,7 +19,7 @@ your physical cartridges before running.
 
 | Motor | Smart port | Direction |
 | --- | --- | --- |
-| Left drive | 10 | Normal |
+| Left drive | 10 | Reversed (`-10` in code) |
 | Right drive | 13 | Normal |
 
 Commands are ASCII with a trailing newline; CRLF also works:
@@ -63,10 +63,11 @@ Power on the Brain with its battery connected, then connect it to the Mac with
 a USB data cable. After the build succeeds, upload:
 
 ```sh
-pros upload --slot 7
+pros upload --slot 8
 ```
 
-This replaces any program in slot **7**. Choose another slot if needed.
+This replaces any program in slot **8**, matching the saved upload slot in
+`project.pros`. Choose another slot if needed.
 See the [PROS upload documentation](https://pros.cs.purdue.edu/v5/tutorials/walkthrough/uploading.html).
 If `pros` or `arm-none-eabi-g++` is not found, complete the extension's toolchain
 setup and reopen its terminal. Close other applications using the Brain's
@@ -75,7 +76,7 @@ serial connection before uploading.
 ## Run on the V5 Brain
 
 1. Connect the left drive motor to smart port **10** and the right to **13**.
-2. On the Brain, open the program in slot **7** and press **Run**.
+2. On the Brain, open the program in slot **8** and press **Run**.
 3. Confirm the screen displays:
 
    ```text
@@ -90,7 +91,7 @@ EZ-Template autonomous examples are inactive in Jetson mode. If connected to
 competition control, the robot must be enabled for motion commands to work.
 Both the autonomous and driver-control callbacks wait for Jetson commands.
 
-Both drive motors currently have normal direction configured. If a motor spins
+The left drive motor is reversed; the right uses normal direction. If a motor spins
 the wrong way for forward travel, reverse that motor's port sign in
 `src/jetson_controller.cpp` (for example, `13` to `-13`), then rebuild and upload.
 
@@ -126,9 +127,11 @@ With the drive wheels lifted, run:
 python scripts/drive_example.py
 ```
 
-The example takes no arguments: it drives both motors forward at **50 RPM for
-one second**, then stops. It uses `/dev/ttyACM1`; if your Brain uses a different
-user serial port, edit that one string in `scripts/drive_example.py`.
+The example takes no arguments: it commands both motors forward at **150 RPM
+for one second** (`0.75` per side), then stops. It currently uses the Mac user
+serial port `/dev/cu.usbmodem1103`. On the Jetson, change that string in
+`scripts/drive_example.py` to your Brain's user port, often `/dev/ttyACM1`.
+Port names can change when reconnecting the Brain; verify yours before running.
 
 The Brain displays the accepted speed command. Leaving the client's `with`
 block sends `STOP_ALL` and closes the connection, including when Ctrl+C or an
