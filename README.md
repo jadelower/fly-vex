@@ -96,13 +96,22 @@ the wrong way for forward travel, reverse that motor's port sign in
 
 ## Send commands from the Jetson
 
-For a standalone test, install PySerial in a Python virtual environment on the
-Jetson:
+The Python scripts run on the Jetson and do not require ROS:
+
+| File | Purpose |
+| --- | --- |
+| [scripts/jetson_vex_cient.py](scripts/jetson_vex_cient.py) | Reusable `V5Drive` client: opens USB, sends drive/stop commands, and attempts to stop before closing. |
+| [scripts/drive_example.py](scripts/drive_example.py) | Simple example: drive forward for one second, then stop. No command-line arguments. |
+| [scripts/requirements.txt](scripts/requirements.txt) | PySerial dependency for the Jetson scripts. |
+| [tests/test_jetson_vex_cient.py](tests/test_jetson_vex_cient.py) | Client and example tests using a simulated serial port. |
+
+Copy or clone this project onto the Jetson. From its root directory, install
+the Python dependency in a virtual environment:
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install pyserial
+python -m pip install -r scripts/requirements.txt
 python -m serial.tools.list_ports -v
 ```
 
@@ -111,28 +120,39 @@ can vary, so verify your device. Do not have another serial terminal or ROS
 node using the same connection. PySerial supports listing ports and writing
 bytes directly; see its [documentation](https://pyserial.readthedocs.io/en/latest/shortintro.html).
 
-With the drive wheels lifted, save this example as `drive_test.py` on the Jetson,
-adjust the port, and run it with `python drive_test.py`:
+With the drive wheels lifted, run:
+
+```sh
+python scripts/drive_example.py
+```
+
+The example takes no arguments: it drives both motors forward at **50 RPM for
+one second**, then stops. It uses `/dev/ttyACM1`; if your Brain uses a different
+user serial port, edit that one string in `scripts/drive_example.py`.
+
+The Brain displays the accepted speed command. Leaving the client's `with`
+block sends `STOP_ALL` and closes the connection, including when Ctrl+C or an
+exception interrupts the example. A lost USB connection can prevent the stop
+from arriving.
+
+To reuse the client in another Python script placed inside `scripts/`:
 
 ```python
 import time
-import serial
+from jetson_vex_cient import V5Drive
 
 # Replace with your Brain's USB user serial port.
-with serial.Serial("/dev/ttyACM1", 115200, timeout=1, write_timeout=1) as brain:
-    try:
-        brain.write(b"MOTOR_SPEED,0.25,0.25\n")
-        brain.flush()
-        time.sleep(1)
-    finally:
-        brain.write(b"STOP_ALL\n")
-        brain.flush()
+with V5Drive("/dev/ttyACM1") as brain:
+    brain.drive(0.25, 0.25)
+    time.sleep(1)
+    brain.stop()  # Optional explicit stop; exiting the with block also stops.
 ```
 
-This commands both motors to **50 RPM for one second**, then brakes them.
-The Brain displays the accepted speed command. The `finally` block attempts to
-stop the motors on normal completion or Ctrl+C, but cannot deliver a stop if
-the connection is lost.
+The client uses 115200 baud and one-second serial read/write timeouts. It adds
+the newline to each command and does not wait for a firmware acknowledgement.
+`brain.drive(left, right)` accepts finite speed fractions from -1 to 1;
+`brain.stop()` brakes both motors. Import `V5Drive` from `jetson_vex_cient`
+when writing your own Jetson control code.
 
 Other commands you can send are:
 
@@ -167,6 +187,15 @@ recovery after oversized input:
 ```sh
 c++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/jetson_protocol_test.cpp -o /tmp/fly-vex-protocol-test
 /tmp/fly-vex-protocol-test
+```
+
+The six tests in [test_jetson_vex_cient.py](tests/test_jetson_vex_cient.py)
+use a simulated serial port and require no PySerial or connected Brain.
+They cover command formatting, invalid input, Ctrl+C cleanup,
+partial writes, disconnect failures, and the one-second drive example:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_jetson_vex_cient.py'
 ```
 
 Build and host tests do not verify USB reception or motor motion on real hardware.

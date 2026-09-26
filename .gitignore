@@ -15,3 +15,8 @@ temp.log
 temp.errors
 *.ini
 .d/
+
+# Jetson Python environment and bytecode
+.venv/
+__pycache__/
+*.pyc
